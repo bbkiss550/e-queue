@@ -1,0 +1,10 @@
+target/
+.tools/
+.local/
+application-local.properties
+.env
+*.log
+node_modules/
+artifacts/
+.idea/
+*.iml

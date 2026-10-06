@@ -1,0 +1,50 @@
+<!DOCTYPE html><html lang="th" xmlns:th="http://www.thymeleaf.org">
+<head th:fragment="head(title)">
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="_csrf" th:content="${_csrf.token}"><meta name="_csrf_header" th:content="${_csrf.headerName}">
+  <title th:text="${title} + ' | ' + ${settings.shopName}">E-Queue</title>
+  <link rel="stylesheet" href="/assets/vendor/fonts/boxicons.css">
+  <link rel="stylesheet" href="/assets/vendor/css/core.css">
+  <link rel="stylesheet" href="/assets/vendor/css/theme-default.css">
+  <link rel="stylesheet" href="/assets/vendor/libs/perfect-scrollbar/perfect-scrollbar.css">
+  <link rel="stylesheet" href="/css/queue.css">
+  <script src="/assets/vendor/js/helpers.js"></script><script src="/assets/js/config.js"></script>
+</head>
+<body>
+<header th:fragment="customerHeader" class="customer-header">
+  <div class="container customer-header-inner"><a class="brand" href="/"><span th:text="${settings.shopName}">ABC Car Care</span></a>
+    <span class="shop-hours"><i class="bx bx-time-five" aria-hidden="true"></i><span id="headerHours">เวลาเปิดบริการ</span></span>
+  </div>
+</header>
+<th:block th:fragment="adminSidebar">
+  <aside id="layout-menu" class="layout-menu menu-vertical menu queue-sidebar">
+    <div class="app-brand"><a href="/admin/bookings" class="app-brand-link brand"><span th:text="${settings.shopName}">ABC Car Care</span></a>
+      <a href="#" class="layout-menu-toggle menu-link ms-auto d-block d-xl-none" aria-label="ปิดเมนู"><i class="bx bx-x"></i></a></div>
+    <div class="menu-inner-shadow"></div><ul class="menu-inner py-3">
+      <li class="menu-item" th:classappend="${activePage == 'bookings'} ? 'active'"><a href="/admin/bookings" class="menu-link"><i class="menu-icon bx bx-calendar-check"></i><span>รายการจอง</span></a></li>
+      <li class="menu-item" th:classappend="${activePage == 'settings'} ? 'active'"><a href="/admin/settings" class="menu-link"><i class="menu-icon bx bx-cog"></i><span>ตั้งค่าการจอง</span></a></li>
+    </ul>
+    <div class="sidebar-bottom"><div class="admin-identity"><i class="bx bx-user-circle"></i><span>ผู้ดูแลระบบ</span></div>
+      <form th:action="@{/admin/logout}" method="post"><button class="menu-link logout-button" type="submit"><i class="menu-icon bx bx-log-out"></i>ออกจากระบบ</button></form></div>
+  </aside>
+</th:block>
+<nav th:fragment="adminNavbar" id="layout-navbar" class="layout-navbar container-xxl navbar navbar-expand-xl navbar-detached align-items-center bg-navbar-theme">
+  <div class="layout-menu-toggle navbar-nav me-3 d-xl-none"><a class="nav-link px-0" href="#" aria-label="เปิดเมนู"><i class="bx bx-menu bx-sm"></i></a></div>
+  <span class="navbar-caption">ระบบจัดการการจอง</span>
+  <div class="ms-auto d-flex align-items-center gap-3"><span id="liveConnection" class="connection-state"><span></span>กำลังเชื่อมต่อ</span>
+    <div class="dropdown"><button id="notificationBell" class="btn btn-icon btn-outline-secondary position-relative" data-bs-toggle="dropdown" data-bs-auto-close="outside" aria-label="แจ้งเตือนการจอง" aria-expanded="false"><i class="bx bx-bell"></i><span id="notificationCount" class="notification-count" hidden>0</span></button>
+      <div class="dropdown-menu dropdown-menu-end notification-panel"><div class="notification-heading"><strong>แจ้งเตือนการจอง</strong><button id="readNotifications" class="btn btn-sm btn-text-primary">อ่านทั้งหมด</button></div><div id="notificationList" class="notification-list"></div></div>
+    </div></div>
+</nav>
+<th:block th:fragment="overlays">
+  <div class="modal fade" id="actionModal" tabindex="-1" aria-labelledby="actionModalTitle" aria-hidden="true"><div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable"><div class="modal-content"><div class="modal-header"><h4 class="modal-title" id="actionModalTitle"></h4><button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="ปิด"></button></div><div class="modal-body" id="actionModalBody"></div><div class="modal-footer" id="actionModalFooter"></div></div></div></div>
+  <div class="modal fade" id="confirmModal" tabindex="-1" aria-labelledby="confirmTitle" aria-hidden="true"><div class="modal-dialog modal-dialog-centered"><div class="modal-content"><div class="modal-header"><h5 class="modal-title" id="confirmTitle">ยืนยันทำรายการ</h5><button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="ปิด"></button></div><div class="modal-body" id="confirmMessage"></div><div class="modal-footer"><button class="btn btn-outline-secondary" data-bs-dismiss="modal">กลับ</button><button id="confirmAccept" class="btn btn-primary">ยืนยัน</button></div></div></div></div>
+  <div class="toast-container position-fixed bottom-0 end-0 p-3"><div id="appToast" class="toast" role="status" aria-live="polite" aria-atomic="true"><div class="toast-header"><i class="bx bx-info-circle me-2"></i><strong class="me-auto">E-Queue</strong><button class="btn-close" data-bs-dismiss="toast" aria-label="ปิด"></button></div><div class="toast-body" id="toastMessage"></div></div></div>
+</th:block>
+<th:block th:fragment="scripts">
+  <script th:inline="javascript">window.QUEUE_SETTINGS = /*[[${settings}]]*/ {};</script>
+  <script src="/assets/vendor/libs/popper/popper.js"></script><script src="/assets/vendor/js/bootstrap.js"></script>
+  <script src="/assets/vendor/libs/perfect-scrollbar/perfect-scrollbar.js"></script><script src="/assets/vendor/js/menu.js"></script><script src="/assets/js/main.js"></script>
+  <script src="/js/common.js"></script>
+</th:block>
+</body></html>

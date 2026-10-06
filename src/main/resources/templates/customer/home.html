@@ -1,0 +1,9 @@
+<!DOCTYPE html><html lang="th" class="light-style" data-assets-path="/assets/" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/common :: head('จองคิวออนไลน์')}"></head>
+<body data-page="home"><header th:replace="~{fragments/common :: customerHeader}"></header>
+<main class="container customer-main home-main">
+  <section class="home-intro"><div class="eyebrow"><i class="bx bx-calendar-check"></i> จองเวลาที่สะดวกสำหรับคุณ</div><h1 th:text="${settings.shopName}">ABC Car Care</h1><h2>ระบบจองคิวออนไลน์</h2><p>สะดวก รวดเร็ว ไม่ต้องรอคิว</p></section>
+  <div class="row g-4 home-actions"><div class="col-md-6"><a href="/booking" class="card action-card booking-action"><div class="action-icon"><i class="bx bx-calendar"></i></div><div><h3>จองคิว</h3><p>เลือกวันและเวลาที่สะดวก</p></div><i class="bx bx-chevron-right action-arrow"></i></a></div><div class="col-md-6"><a href="/check" class="card action-card"><div class="action-icon blue"><i class="bx bx-search"></i></div><div><h3>ตรวจสอบการจอง</h3><p>ดูประวัติ / เลื่อน / ยกเลิก</p></div><i class="bx bx-chevron-right action-arrow"></i></a></div></div>
+  <div class="row g-4 home-benefits"><div class="col-md-4"><i class="bx bx-time-five"></i><div><strong>เลือกเวลาของคุณ</strong><p>จองล่วงหน้าได้ถึงอีก 2 วัน</p></div></div><div class="col-md-4"><i class="bx bx-check-shield"></i><div><strong>จองง่าย</strong><p>ไม่ต้องสมัครสมาชิก</p></div></div><div class="col-md-4"><i class="bx bx-mobile-alt"></i><div><strong>ใช้งานได้ทุกที่</strong><p>ทั้งคอมพิวเตอร์และมือถือ</p></div></div></div>
+  <div class="home-footer"><a href="/admin/login">เข้าสู่ระบบผู้ดูแล <i class="bx bx-right-arrow-alt"></i></a></div>
+</main><th:block th:replace="~{fragments/common :: scripts}"></th:block></body></html>
