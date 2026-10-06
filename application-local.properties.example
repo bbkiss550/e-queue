@@ -1,4 +1,4 @@
-# Copy to application-local.properties (ignored by Git).
+# Used only by the local profile. Copy to application-local.properties (ignored by Git).
 spring.datasource.url=jdbc:postgresql://localhost:5432/db_queue
 spring.datasource.username=postgres
 spring.datasource.password=YOUR_DATABASE_PASSWORD

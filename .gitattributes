@@ -1,0 +1,4 @@
+mvnw text eol=lf
+Dockerfile text eol=lf
+.dockerignore text eol=lf
+render.yaml text eol=lf

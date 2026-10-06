@@ -63,3 +63,20 @@
 - ไม่มีตัวสร้างบัญชีแอดมินหรือค่า config สำหรับรหัสผ่านบัญชีเริ่มต้น
 - เปิด application context กับ schema แยกที่ว่าง และตรวจทั้ง 7 ตารางยังไม่มีแถวข้อมูล
 - ข้อมูลร้านและตารางเวลาในชุดทดสอบเป็น fixture เฉพาะฐานข้อมูลทดสอบ ไม่ใช่ข้อมูลที่แอปสร้างตอนเริ่มทำงาน
+
+## Profile local / uat
+
+- ผ่านทั้งหมด 32 กรณี: integration tests 29 และ profile configuration tests 3
+- เมื่อไม่ระบุ profile โหลด Local; เมื่อเลือก Local ไม่โหลด UAT
+- UAT อ่านค่าจาก PG environment variables ไม่โหลดไฟล์ Local และใช้ SSL/channel binding แบบ require
+- ชุด integration tests บังคับ profile Local และฐานข้อมูล db_queue_test
+- ทดสอบเชื่อมต่อ Neon แบบ read-only สำเร็จ ขณะตรวจยังไม่มีตารางระบบทั้ง 7 ตาราง โดยไม่มีการสร้างตารางหรือเพิ่มข้อมูล
+
+## Docker / Render
+
+- Maven package สำเร็จ (ข้าม tests สำหรับ build นี้; ชุดทดสอบ 32 กรณีผ่านในการตรวจ profile ก่อนหน้า)
+- ตรวจ render.yaml ด้วย SnakeYAML: syntax ถูกต้อง, runtime Docker, health check `/`, environment keys ไม่ซ้ำ และ PGPASSWORD เป็นค่าที่ผู้ deploy ต้องใส่เอง
+- Dockerfile คัดลอกเฉพาะ build inputs และ JAR; ไม่มีไฟล์ credentials หรือขั้นตอนเตรียมฐานข้อมูล
+- เพิ่ม .gitattributes ให้ Maven shell wrapper ใช้ LF เพื่อรันใน Linux container ได้หลัง checkout จาก Windows
+- ยังไม่ยืนยันการ build/run image: Docker Desktop Linux engine บนเครื่องเชื่อมต่อไม่ได้ แม้ลองเปิด Docker Desktop แล้ว
+- ยังไม่ได้ deploy ไป Render หรือแก้ไขข้อมูล UAT

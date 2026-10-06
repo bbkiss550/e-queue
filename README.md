@@ -7,20 +7,41 @@
 - ลูกค้า: http://localhost:8090/
 - ผู้ดูแล: http://localhost:8090/admin/login
 - บัญชีแอดมินใช้ข้อมูลใน `m_user` เท่านั้น ระบบไม่สร้างบัญชีให้อัตโนมัติ
-- ฐานข้อมูลใช้งาน: `db_queue` บน `localhost:5432`
-- ค่าเชื่อมต่อและรหัสผ่านเก็บใน `application-local.properties` ซึ่งถูกยกเว้นจาก Git
+- Profile เริ่มต้น: `local` ใช้ฐานข้อมูล `db_queue` บน `localhost:5432`
+- Profile `uat`: ใช้ฐานข้อมูล Neon ตาม `PGHOST`, `PGDATABASE`, `PGUSER` และ `PGPASSWORD`
+- รหัสผ่านแยกเก็บใน `application-local.properties` / `application-uat.properties` ซึ่งถูกยกเว้นจาก Git และโหลดเฉพาะ profile นั้น
 
 รันคำสั่งจากโฟลเดอร์โปรเจกต์:
 
 ```powershell
 .\setup-java.ps1  # ดาวน์โหลด JDK 21 แบบแยกใน .tools เมื่อยังไม่มี พร้อมตรวจ SHA-256
 .\build.ps1       # build ด้วย Maven Wrapper
-.\start.ps1       # เริ่มระบบพอร์ต 8090; ใช้ -Port 8092 เพื่อเปลี่ยนพอร์ต
-.\start.ps1 -Background  # เปิดแบบเบื้องหลัง พร้อม log ใน .local
+.\start.ps1 -Profile local  # พอร์ต 8090; ใช้ -Port 8092 เพื่อเปลี่ยนพอร์ต
+.\start.ps1 -Profile local -Background  # เปิดเบื้องหลัง พร้อม log ใน .local
+.\start.ps1 -Profile uat  # เปิดระบบด้วยฐานข้อมูล UAT
 .\stop.ps1        # หยุด instance ที่เปิดด้วย -Background
 ```
 
 โปรเจกต์นี้เตรียม Java 21 ไว้ใน `.tools` แล้ว ไม่แก้ Java เริ่มต้นของเครื่อง ตัว Maven Wrapper ดาวน์โหลด Maven จาก Maven Central เมื่อจำเป็น
+
+## Profile local / uat
+
+`application.yml` เก็บค่าร่วม โดยแยก datasource และ template cache ไว้ใน `application-local.yml` / `application-uat.yml` หากไม่ระบุ profile จะใช้ `local` เสมอ
+
+- Local: คัดลอก `application-local.properties.example` เป็น `application-local.properties` แล้วกรอกค่าของเครื่อง
+- UAT: คัดลอก `application-uat.properties.example` เป็น `application-uat.properties` แล้วกรอกค่าของ Neon และ remember-key ของ UAT หรือกำหนด environment variables แทน
+- UAT รองรับ `PGHOST`, `PGPORT`, `PGDATABASE`, `PGUSER`, `PGPASSWORD`, `PGSSLMODE`, `PGCHANNELBINDING`; URL สำหรับ JDBC ใช้ชื่อ parameter `channelBinding` และบังคับ SSL/channel binding เป็น `require` ตามค่าเริ่มต้น
+- UAT ไม่โหลดไฟล์ค่าเชื่อมต่อ Local ใช้ template cache ส่วน Local ปิด cache สำหรับพัฒนา
+- ทั้งสอง profile ไม่มีการสร้าง schema หรือ insert ข้อมูลตั้งต้นอัตโนมัติ
+
+เปิด JAR โดยตรงได้ด้วย:
+
+```powershell
+java -jar target/e-queue-1.0.0.jar --spring.profiles.active=local
+java -jar target/e-queue-1.0.0.jar --spring.profiles.active=uat
+```
+
+หรือกำหนด `SPRING_PROFILES_ACTIVE=uat` ในสภาพแวดล้อมที่ deploy สำหรับ `start.ps1` ให้เลือกผ่าน `-Profile` ซึ่งระบุ profile ให้ชัดเจนเสมอ
 
 สร้างฐานข้อมูล `db_queue` แล้วรัน `database/schema.sql` ด้วย DBeaver หรือ PostgreSQL client ก่อนเปิดระบบครั้งแรก ตัวอย่างจากโฟลเดอร์โปรเจกต์:
 
@@ -32,9 +53,61 @@ psql -h localhost -p 5432 -U postgres -d db_queue -v ON_ERROR_STOP=1 -f database
 
 ก่อนเปิดใช้งานฐานข้อมูลใหม่ ผู้ดูแลฐานข้อมูลต้องจัดเตรียมบัญชีแอดมินใน `m_user` (รหัสผ่านเก็บเป็น BCrypt hash), ข้อมูลร้านใน `m_booking_setting` (`id_setting=1`) และตารางเวลาทั้ง 7 วันใน `m_business_hour` (`day_of_week=1–7`) ตามข้อมูลจริงของร้าน ระบบไม่มีข้อมูลสำรองหรือค่าเริ่มต้นที่สร้างแทนให้
 
-ฐานข้อมูลเดิมที่มีตารางครบแล้วเปิดใช้งานต่อได้ทันที หากย้ายเครื่อง ให้คัดลอก `application-local.properties.example` เป็น `application-local.properties` และกรอกค่าจริง
+ฐานข้อมูลเดิมที่มีตารางครบแล้วเปิดใช้งานต่อได้ทันที หากย้ายเครื่อง ให้คัดลอกไฟล์ `.properties.example` ของ profile ที่ต้องการแล้วกรอกค่าจริง สำหรับ UAT ที่ยังไม่มีตาราง ให้ผู้ดูแลฐานข้อมูลรัน SQL และจัดเตรียมข้อมูลจริงก่อนเปิดใช้งาน
 
 รองรับ environment variables มาตรฐานของ Spring ได้แก่ `SPRING_DATASOURCE_URL`, `SPRING_DATASOURCE_USERNAME`, `SPRING_DATASOURCE_PASSWORD`, `APP_REMEMBER_KEY` และ `PORT` รหัสผ่านใน `m_user` เก็บแบบ BCrypt
+
+## Deploy บน Render ด้วย Docker
+
+มี `Dockerfile` แบบ multi-stage ใช้ Java 21: build ด้วย Maven Wrapper และรันเฉพาะ JAR ด้วยผู้ใช้ที่ไม่ใช่ root ค่าเริ่มต้นใน container คือ profile `uat` และรับพอร์ตจาก `PORT` ส่วน `.dockerignore` ส่งเฉพาะ source และไฟล์ build จึงไม่รวมรหัสผ่านในไฟล์ `.properties`, `.local`, `.tools` หรือ artifacts
+
+ก่อน deploy ให้เตรียมตารางด้วย `database/schema.sql` และข้อมูลจริงของร้าน/บัญชีแอดมินใน Neon ให้ครบ ฐานข้อมูล UAT ที่ตรวจครั้งล่าสุดยังไม่มีตารางระบบ แอปและ Docker ไม่มีขั้นตอนสร้างตารางหรือ insert ข้อมูลให้อัตโนมัติ Health check ใช้ `/` ซึ่งต้องอ่านข้อมูลร้านได้จึงจะผ่าน
+
+### ใช้ Blueprint
+
+1. Push โค้ดที่มี `Dockerfile` และ `render.yaml` ขึ้น GitHub
+2. ที่ Render เลือก **New → Blueprint** แล้วเชื่อม repository `bbkiss550/e-queue`
+3. กรอก `PGPASSWORD` ของ Neon เมื่อ Render ขอค่า ส่วน `REMEMBER_KEY` จะสร้างแบบสุ่มให้และเก็บเป็น environment variable
+4. Deploy แล้วตรวจหน้าแรก, Login, การจอง และ Noti ผ่าน URL HTTPS ของ Render
+
+Blueprint ตั้ง Web Service แบบ Free ใน Singapore ไว้ก่อน ปรับ plan ได้ตามการใช้งานจริง บริการ Free จะพักเมื่อไม่มีการใช้งาน จึงเหมาะสำหรับทดลอง; ดู [ข้อจำกัดของ Free service](https://render.com/docs/free)
+
+### สร้าง Web Service ผ่าน Dashboard
+
+เลือก **New → Web Service**, เชื่อม repository, เลือก **Language: Docker**, Dockerfile `./Dockerfile` และ Health Check Path `/` ไม่ต้องใส่ Build Command หรือ Start Command เพิ่ม จากนั้นตั้ง environment variables:
+
+| Variable | ค่า |
+| --- | --- |
+| `SPRING_PROFILES_ACTIVE` | `uat` |
+| `PORT` | `10000` |
+| `PGHOST` | Host ของ Neon ตาม `render.yaml` |
+| `PGPORT` | `5432` |
+| `PGDATABASE` | `db_queue` |
+| `PGUSER` | `neondb_owner` |
+| `PGPASSWORD` | รหัสผ่าน Neon ใส่ใน Render เท่านั้น |
+| `PGSSLMODE` | `require` |
+| `PGCHANNELBINDING` | `require` |
+| `REMEMBER_KEY` | สุ่มอย่างน้อย 32 bytes และเก็บค่าเดิมข้าม deploy |
+| `SERVER_FORWARD_HEADERS_STRATEGY` | `framework` |
+| `SERVER_SERVLET_SESSION_COOKIE_SECURE` | `true` |
+
+สองค่าท้ายรองรับ HTTPS ที่ Render proxy และให้ session cookie ส่งผ่าน HTTPS การแจ้งเตือน SSE และ session เก็บในหน่วยความจำของ instance ให้ใช้ **1 instance** สำหรับโครงสร้างปัจจุบัน; หากต้องการหลาย instance ต้องเพิ่มระบบกระจาย event และ shared session ก่อน
+
+### Build Docker บนเครื่อง
+
+```powershell
+docker build -t e-queue:latest .
+```
+
+ทดสอบ container กับ UAT โดยกำหนด `$env:PGPASSWORD` และ `$env:REMEMBER_KEY` บนเครื่องก่อน ไม่ส่งรหัสผ่านเป็น build argument:
+
+```powershell
+docker run --rm -p 10000:10000 -e PGPASSWORD -e REMEMBER_KEY e-queue:latest
+```
+
+เปิด `http://localhost:10000` (ค่า secure cookie สำหรับ HTTPS ถูกตั้งใน Render ไม่ได้บังคับใน Dockerfile) Container จะใช้ฐานข้อมูล UAT จริง จึงต้องเตรียมฐานข้อมูลและระวังการทดสอบที่แก้ไขข้อมูล
+
+อ้างอิง [Docker on Render](https://render.com/docs/docker), [Blueprint YAML](https://render.com/docs/blueprint-spec) และ [Health checks](https://render.com/docs/health-checks)
 
 ## กติกาการจอง
 
@@ -73,6 +146,8 @@ src/main/java/th/co/equeue/
   web/             Thymeleaf pages, JSON API, Validation
 database/schema.sql SQL สำหรับเตรียมฐานข้อมูลด้วยตนเอง
 src/main/resources/
+  application.yml ค่าร่วมและ default profile
+  application-local.yml / application-uat.yml ค่าของแต่ละสภาพแวดล้อม
   templates/       Layout/fragment ของลูกค้าและ Admin
   static/assets/   Sneat 1.0.0 assets ที่นำมาจาก Pack
   static/css/      CSS ปรับหน้าตาตาม Reference และ Responsive

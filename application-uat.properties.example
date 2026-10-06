@@ -1,0 +1,9 @@
+# Copy to application-uat.properties (ignored by Git), or provide environment variables.
+PGHOST=ep-restless-wildflower-aobuu3z2.c-2.ap-southeast-1.aws.neon.tech
+PGPORT=5432
+PGDATABASE=db_queue
+PGUSER=neondb_owner
+PGPASSWORD=YOUR_UAT_DATABASE_PASSWORD
+PGSSLMODE=require
+PGCHANNELBINDING=require
+app.remember-key=GENERATE_A_LONG_RANDOM_UAT_SECRET

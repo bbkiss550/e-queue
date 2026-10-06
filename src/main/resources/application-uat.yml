@@ -1,0 +1,9 @@
+spring:
+  config:
+    import: optional:file:./application-uat.properties
+  datasource:
+    url: "jdbc:postgresql://${PGHOST:ep-restless-wildflower-aobuu3z2.c-2.ap-southeast-1.aws.neon.tech}:${PGPORT:5432}/${PGDATABASE:db_queue}?sslmode=${PGSSLMODE:require}&channelBinding=${PGCHANNELBINDING:require}"
+    username: ${PGUSER:neondb_owner}
+    password: ${PGPASSWORD:}
+  thymeleaf:
+    cache: true

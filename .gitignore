@@ -2,6 +2,7 @@ target/
 .tools/
 .local/
 application-local.properties
+application-uat.properties
 .env
 *.log
 node_modules/

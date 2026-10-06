@@ -1,0 +1,34 @@
+services:
+  - type: web
+    name: e-queue
+    runtime: docker
+    plan: free
+    region: singapore
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
+    healthCheckPath: /
+    envVars:
+      - key: SPRING_PROFILES_ACTIVE
+        value: uat
+      - key: PORT
+        value: "10000"
+      - key: SERVER_FORWARD_HEADERS_STRATEGY
+        value: framework
+      - key: SERVER_SERVLET_SESSION_COOKIE_SECURE
+        value: "true"
+      - key: PGHOST
+        value: ep-restless-wildflower-aobuu3z2.c-2.ap-southeast-1.aws.neon.tech
+      - key: PGPORT
+        value: "5432"
+      - key: PGDATABASE
+        value: db_queue
+      - key: PGUSER
+        value: neondb_owner
+      - key: PGPASSWORD
+        sync: false
+      - key: PGSSLMODE
+        value: require
+      - key: PGCHANNELBINDING
+        value: require
+      - key: REMEMBER_KEY
+        generateValue: true

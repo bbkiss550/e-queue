@@ -19,6 +19,7 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.datasource.DriverManagerDataSource;
 import org.springframework.jdbc.datasource.init.ResourceDatabasePopulator;
 import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 import th.co.equeue.service.*;
 import th.co.equeue.web.*;
@@ -27,6 +28,7 @@ import th.co.equeue.web.ApiModels.*;
 @SpringBootTest(properties={"spring.datasource.url=jdbc:postgresql://localhost:5432/db_queue_test",
     "spring.datasource.password=${TEST_DB_PASSWORD}","app.remember-key=test-key-only"})
 @AutoConfigureMockMvc
+@ActiveProfiles("local")
 @Import(QueueIntegrationTest.TestClock.class)
 class QueueIntegrationTest {
     @TestConfiguration static class TestClock { @Bean @Primary Clock testClock(){ return Clock.fixed(Instant.parse("2026-10-06T02:33:00Z"),ZoneId.of("Asia/Bangkok")); } }
