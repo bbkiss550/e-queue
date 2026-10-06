@@ -9,6 +9,9 @@ spring:
     password: ${DB_PASSWORD:}
     hikari:
       maximum-pool-size: 12
+  sql:
+    init:
+      mode: never
   thymeleaf:
     cache: false
   jackson:
@@ -24,6 +27,4 @@ server:
   error:
     include-message: never
 app:
-  admin-username: ${ADMIN_USERNAME:admin}
-  admin-password: ${ADMIN_PASSWORD:}
   remember-key: ${REMEMBER_KEY:}

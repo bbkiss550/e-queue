@@ -6,7 +6,7 @@
 
 - ลูกค้า: http://localhost:8090/
 - ผู้ดูแล: http://localhost:8090/admin/login
-- บัญชีเริ่มต้น: `admin` รหัสผ่านที่สร้างให้เก็บใน `.local/admin-login.txt`
+- บัญชีแอดมินใช้ข้อมูลใน `m_user` เท่านั้น ระบบไม่สร้างบัญชีให้อัตโนมัติ
 - ฐานข้อมูลใช้งาน: `db_queue` บน `localhost:5432`
 - ค่าเชื่อมต่อและรหัสผ่านเก็บใน `application-local.properties` ซึ่งถูกยกเว้นจาก Git
 
@@ -22,9 +22,19 @@
 
 โปรเจกต์นี้เตรียม Java 21 ไว้ใน `.tools` แล้ว ไม่แก้ Java เริ่มต้นของเครื่อง ตัว Maven Wrapper ดาวน์โหลด Maven จาก Maven Central เมื่อจำเป็น
 
-สร้างฐานข้อมูลว่าง `db_queue` ก่อนรันครั้งแรก Flyway สร้างและปรับ schema อัตโนมัติ โดยไม่ใช้ PostgreSQL ENUM หากย้ายเครื่อง ให้คัดลอก `application-local.properties.example` เป็น `application-local.properties` และกรอกค่าจริง
+สร้างฐานข้อมูล `db_queue` แล้วรัน `database/schema.sql` ด้วย DBeaver หรือ PostgreSQL client ก่อนเปิดระบบครั้งแรก ตัวอย่างจากโฟลเดอร์โปรเจกต์:
 
-รองรับ environment variables มาตรฐานของ Spring ได้แก่ `SPRING_DATASOURCE_URL`, `SPRING_DATASOURCE_USERNAME`, `SPRING_DATASOURCE_PASSWORD`, `APP_ADMIN_USERNAME`, `APP_ADMIN_PASSWORD`, `APP_REMEMBER_KEY` และ `PORT` ค่า Admin Password ใช้สร้างบัญชีครั้งแรกเท่านั้น ไม่เปลี่ยนรหัสผ่านบัญชีเดิมทุกครั้งที่เปิดระบบ รหัสผ่านใน `m_user` เก็บแบบ BCrypt
+```powershell
+psql -h localhost -p 5432 -U postgres -d db_queue -v ON_ERROR_STOP=1 -f database/schema.sql
+```
+
+ระบบไม่สร้างหรือปรับโครงสร้างฐานข้อมูลตอนเริ่มทำงาน (`spring.sql.init.mode=never`) ไฟล์ SQL สร้างเฉพาะโครงสร้างตารางโดยไม่ใช้ PostgreSQL ENUM และไม่มีคำสั่ง insert ข้อมูลตั้งต้น รันซ้ำได้โดยไม่ลบข้อมูลหรือเขียนทับค่าร้านเดิม แต่ไม่ใช้สำหรับอัปเกรดโครงสร้างตารางที่มีอยู่ หากโครงสร้างเปลี่ยนต้องรันคำสั่ง SQL ที่จำเป็นด้วยตนเอง
+
+ก่อนเปิดใช้งานฐานข้อมูลใหม่ ผู้ดูแลฐานข้อมูลต้องจัดเตรียมบัญชีแอดมินใน `m_user` (รหัสผ่านเก็บเป็น BCrypt hash), ข้อมูลร้านใน `m_booking_setting` (`id_setting=1`) และตารางเวลาทั้ง 7 วันใน `m_business_hour` (`day_of_week=1–7`) ตามข้อมูลจริงของร้าน ระบบไม่มีข้อมูลสำรองหรือค่าเริ่มต้นที่สร้างแทนให้
+
+ฐานข้อมูลเดิมที่มีตารางครบแล้วเปิดใช้งานต่อได้ทันที หากย้ายเครื่อง ให้คัดลอก `application-local.properties.example` เป็น `application-local.properties` และกรอกค่าจริง
+
+รองรับ environment variables มาตรฐานของ Spring ได้แก่ `SPRING_DATASOURCE_URL`, `SPRING_DATASOURCE_USERNAME`, `SPRING_DATASOURCE_PASSWORD`, `APP_REMEMBER_KEY` และ `PORT` รหัสผ่านใน `m_user` เก็บแบบ BCrypt
 
 ## กติกาการจอง
 
@@ -33,7 +43,6 @@
 - รอบจองเป็นต้นชั่วโมง อยู่ตั้งแต่เวลาเปิดและก่อนเวลาปิดร้าน
 - Admin ตั้งจำนวนคิวต่อชั่วโมง 1–999 และจองล่วงหน้าขั้นต่ำ 0–60 นาที
 - เวลา 09:33 ตั้งขั้นต่ำ 60 นาที จะเลือกจองได้ตั้งแต่ 11:00
-- ค่าเริ่มต้น: เปิดทุกวัน 09:00–18:00, 1 คิวต่อชั่วโมง, ขั้นต่ำ 60 นาที; ปรับได้ในหน้าตั้งค่า
 - ตั้งเวลารายสัปดาห์จันทร์–อาทิตย์ และวันหยุดแยกตามวันที่
 - เพิ่มวันหยุดยกเลิกคิวที่ยังไม่ถึงเวลาของวันนั้นด้วยเหตุผล “ร้านปิด” ส่วนประวัติที่ผ่านเวลาไปแล้วคงไว้
 - ลบวันหยุดเปิดรับจองใหม่ตามตารางประจำ รายการที่ยกเลิกแล้วไม่ถูกคืนสถานะ
@@ -57,13 +66,13 @@ Noti อยู่ในระบบ Admin เท่านั้น ใช้ Ser
 
 ```text
 src/main/java/th/co/equeue/
-  config/          Login, BCrypt และสร้าง Admin ครั้งแรก
+  config/          Login และ BCrypt
   domain/          Booking, BusinessHour, BookingSetting
   repository/      Spring JDBC + PostgreSQL
   service/         กติกาการจอง, Transaction, SSE
   web/             Thymeleaf pages, JSON API, Validation
+database/schema.sql SQL สำหรับเตรียมฐานข้อมูลด้วยตนเอง
 src/main/resources/
-  db/migration/    Flyway SQL
   templates/       Layout/fragment ของลูกค้าและ Admin
   static/assets/   Sneat 1.0.0 assets ที่นำมาจาก Pack
   static/css/      CSS ปรับหน้าตาตาม Reference และ Responsive
@@ -77,7 +86,7 @@ API Admin ต้องผ่าน Login และ POST ทุกตัวตร
 
 ## ทดสอบ
 
-สร้างฐานข้อมูลแยกชื่อ `db_queue_test` แล้วกำหนด `TEST_DB_PASSWORD` ก่อนรัน:
+สร้างฐานข้อมูลแยกชื่อ `db_queue_test` แล้วรัน `database/schema.sql` ในฐานข้อมูลนี้ก่อน พร้อมจัดเตรียมข้อมูลร้านและตารางเวลาที่ชุดทดสอบต้องใช้ จากนั้นกำหนด `TEST_DB_PASSWORD` ก่อนรัน:
 
 ```powershell
 $env:TEST_DB_PASSWORD = 'รหัสผ่าน PostgreSQL ของเครื่อง'

@@ -12,8 +12,12 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.context.TestConfiguration;
+import org.springframework.boot.test.context.runner.WebApplicationContextRunner;
 import org.springframework.context.annotation.*;
+import org.springframework.core.io.FileSystemResource;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.jdbc.datasource.DriverManagerDataSource;
+import org.springframework.jdbc.datasource.init.ResourceDatabasePopulator;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MockMvc;
 import th.co.equeue.service.*;
@@ -21,7 +25,7 @@ import th.co.equeue.web.*;
 import th.co.equeue.web.ApiModels.*;
 
 @SpringBootTest(properties={"spring.datasource.url=jdbc:postgresql://localhost:5432/db_queue_test",
-    "spring.datasource.password=${TEST_DB_PASSWORD}","app.admin-password=queue-test-password-only","app.remember-key=test-key-only"})
+    "spring.datasource.password=${TEST_DB_PASSWORD}","app.remember-key=test-key-only"})
 @AutoConfigureMockMvc
 @Import(QueueIntegrationTest.TestClock.class)
 class QueueIntegrationTest {
@@ -37,6 +41,25 @@ class QueueIntegrationTest {
     CreateBooking request(LocalDate date,int hour,String phone,UUID key,boolean duplicate){return new CreateBooking(date,LocalTime.of(hour,0),"ทดสอบระบบ",phone,key,duplicate);}
     CreateBooking request(int hour,String phone){return request(today,hour,phone,UUID.randomUUID(),false);}
     String fail(Runnable action){return assertThrows(ApiException.class,action::run).code();}
+    @Test void applicationStartsWithoutInsertingInitialData(){
+        String schema="e_queue_no_seed_startup_test";
+        String url="jdbc:postgresql://localhost:5432/db_queue_test?currentSchema="+schema;
+        String password=System.getenv("TEST_DB_PASSWORD");
+        db.execute("CREATE SCHEMA "+schema);
+        try {
+            var isolated=new DriverManagerDataSource(url,"postgres",password);
+            new ResourceDatabasePopulator(new FileSystemResource("database/schema.sql")).execute(isolated);
+            new WebApplicationContextRunner().withUserConfiguration(QueueApplication.class)
+                .withPropertyValues("spring.datasource.url="+url,"spring.datasource.username=postgres",
+                    "spring.datasource.password="+password,"spring.sql.init.mode=never","app.remember-key=test-key-only")
+                .run(context->{
+                    assertNull(context.getStartupFailure());
+                    var emptyDb=context.getBean(JdbcTemplate.class);
+                    for(String table:List.of("m_user","m_booking_setting","m_business_hour","m_holiday","t_booking","t_booking_running","t_notification"))
+                        assertEquals(0,emptyDb.queryForObject("SELECT count(*) FROM "+table,Integer.class),table);
+                });
+        } finally {db.execute("DROP SCHEMA "+schema+" CASCADE");}
+    }
     @Test void leadTimeRoundsToNextWholeHour(){assertEquals("SLOT_UNAVAILABLE",fail(()->service.create(request(10,"0811111111"),"CUSTOMER")));var b=service.create(request(11,"0811111111"),"CUSTOMER");assertEquals(LocalTime.of(11,0),b.bookingTime());}
     @Test void noHalfHourBookings(){var req=new CreateBooking(today,LocalTime.of(11,30),"ชื่อ","0811111111",UUID.randomUUID(),false);assertEquals("SLOT_UNAVAILABLE",fail(()->service.create(req,"CUSTOMER")));}
     @Test void dateHorizonInclusive(){service.create(request(today.plusDays(2),9,"0811111111",UUID.randomUUID(),false),"CUSTOMER");assertEquals("INVALID_DATE",fail(()->service.create(request(today.plusDays(3),9,"0822222222",UUID.randomUUID(),false),"CUSTOMER")));assertEquals("INVALID_DATE",fail(()->service.create(request(today.minusDays(1),9,"0822222222",UUID.randomUUID(),false),"CUSTOMER")));}

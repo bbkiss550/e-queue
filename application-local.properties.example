@@ -2,6 +2,4 @@
 spring.datasource.url=jdbc:postgresql://localhost:5432/db_queue
 spring.datasource.username=postgres
 spring.datasource.password=YOUR_DATABASE_PASSWORD
-app.admin-username=admin
-app.admin-password=INITIAL_PASSWORD_AT_LEAST_12_CHARACTERS
 app.remember-key=GENERATE_A_LONG_RANDOM_SECRET
